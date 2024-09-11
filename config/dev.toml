@@ -1,0 +1,3 @@
+[logging]
+directory = "logs"
+filename = "trader.log"
