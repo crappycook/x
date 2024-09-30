@@ -8,15 +8,6 @@ use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 use tracing::{error, info, instrument, warn};
 use url::Url;
 
-#[allow(unused)]
-#[derive(Deserialize, Debug)]
-struct AvgPriceResponse {
-    mins: u32,
-    price: String,
-    #[serde(rename = "closeTime")]
-    close_time: u64,
-}
-
 #[instrument(skip(pair))]
 pub async fn ticker(pair: &CryptoPair) -> Result<()> {
     info!(
@@ -108,26 +99,4 @@ pub async fn ticker(pair: &CryptoPair) -> Result<()> {
     }
 
     Ok(())
-}
-
-#[instrument(skip(client))]
-fn fetch_price(client: &Client, url: &str) -> Result<f64> {
-    let response = client
-        .get(url)
-        .send()
-        .context("Failed to send request to Binance API")?;
-
-    let status = response.status();
-    info!(status = %status, "Received response from Binance API");
-
-    let avg_price: AvgPriceResponse = response
-        .json()
-        .context("Failed to parse Binance API response")?;
-
-    info!(avg_price = ?avg_price, "Parsed response");
-
-    avg_price
-        .price
-        .parse()
-        .context("Failed to parse price as a float")
 }

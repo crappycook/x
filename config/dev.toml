@@ -1,3 +1,6 @@
 [logging]
 directory = "logs"
-filename = "trader.log"
+filename = "x-trader.log"
+
+[database]
+url = "sqlite:$HOME/trader.db"

@@ -1,5 +1,6 @@
 use config::{Config, ConfigError, File};
 use serde::Deserialize;
+use std::env;
 
 #[derive(Debug, Deserialize)]
 pub struct LoggingConfig {
@@ -10,6 +11,12 @@ pub struct LoggingConfig {
 #[derive(Debug, Deserialize)]
 pub struct AppConfig {
     pub logging: LoggingConfig,
+    pub database: DatabaseConfig,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DatabaseConfig {
+    pub url: String,
 }
 
 impl AppConfig {
@@ -18,6 +25,14 @@ impl AppConfig {
             .add_source(File::with_name("config/dev"))
             .build()?;
 
-        config.try_deserialize()
+        let mut app_config: AppConfig = config.try_deserialize()?;
+
+        // Expand $HOME in the database URL
+        if app_config.database.url.contains("$HOME") {
+            let home = env::var("HOME").expect("HOME environment variable not set");
+            app_config.database.url = app_config.database.url.replace("$HOME", &home);
+        }
+
+        Ok(app_config)
     }
 }

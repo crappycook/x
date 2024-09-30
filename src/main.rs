@@ -1,13 +1,17 @@
 mod core;
+mod model;
 
 use anyhow::Result;
 use core::cli;
 use core::config;
+use core::dao;
 use core::tracker;
 use std::fs;
 use tracing::{info, Level};
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::fmt::format::FmtSpan;
+use sea_orm_migration::MigratorTrait;
+use core::migration::Migrator;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -41,6 +45,15 @@ async fn main() -> Result<()> {
 
     let pair = cli::get_crypto_pair(&args.base.unwrap(), &args.quote.unwrap());
     info!("Selected pair: {}", pair.to_string());
+
+    // Ensure the database file exists
+    dao::check_database_file(&config.database.url)?;
+
+    // Establish database connection and run migrations
+    let db_conn = dao::establish_connection(&config.database.url).await?;
+
+    // Run migrations
+    Migrator::up(&db_conn, None).await?;
 
     // Call the async track_price function
     tracker::ticker(&pair).await?;
